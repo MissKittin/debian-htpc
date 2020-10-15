@@ -1,0 +1,9 @@
+#!/bin/sh
+# ...issues...
+sleep 10
+# Send notify to kodi or notify-daemon
+kodi-check -q && kodi-notify-send "Zdalny pulpit" "Usługa uruchomiona" || notify-send "Virtual Network Computing" "Desktop is now accessible"
+# Show ip info
+[ "$1" = "ip" ] && display-ip
+# Jump
+exec x11vnc -rfbport 5901 --rfbauth $HOME/.vnc/passwd -loop

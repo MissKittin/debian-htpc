@@ -1,0 +1,27 @@
+. ./lib/sh/library.rc
+
+LOG="/home/kodi/logs/system/update.log"
+
+upgrade()
+{
+	../../../usr/local/sbin/autoupdate force
+	case $? in
+		0)
+			echo -n "Zaktualizowano"
+		;;
+		1)
+			echo -n "Usługa wyłączona"
+		;;
+		2)
+			echo -n "Usługa zajęta"
+		;;
+	esac
+}
+info()
+{
+	if [ -e $LOG ]; then
+		stat -c %y $LOG | cut -d . -f 1 | sed 's\-\.\g' | $NO_NEWLINE
+	else
+		echo -n "Nie mam danych"
+	fi
+}

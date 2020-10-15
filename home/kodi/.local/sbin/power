@@ -1,0 +1,24 @@
+#!/bin/sh
+sudo="sudo /home/kodi/.local/sbin/nosudo"
+
+HALT=`echo $0 | grep halt`
+[ ! "$HALT" = "" ] && exec $sudo halt
+
+KEXEC=`echo $0 | grep kexec-reboot`
+if [ ! "$KEXEC" = "" ]; then
+	$sudo kexec -l /boot/vmlinuz-`uname -r` --initrd=/boot/initrd.img-`uname -r` --append=`cat /proc/cmdline`
+	[ ! "$?" = "0" ] && echo "errr" && exit 1
+fi
+
+REBOOT=`echo $0 | grep reboot`
+[ ! "$REBOOT" = "" ] && exec $sudo reboot
+
+SUSPEND=`echo $0 | grep s2r`
+if [ ! "$SUSPEND" = "" ]; then
+	$sudo s2ram
+	for i in `ls /dev/sd?`; do
+		$sudo hdparm -S `cat /etc/rc.local | grep 'hdparm -S' | awk '{print $3}'` $i > /dev/null 2>&1
+	done
+fi
+
+exit 1

@@ -1,0 +1,14 @@
+. ./lib/sh/library.rc
+
+issue()
+{
+	cat /etc/issue.net | $NO_NEWLINE
+}
+codename()
+{
+	lsb_release -c | awk '{print $2}' | $NO_NEWLINE
+}
+debvr()
+{
+	cat /etc/debian_version | $NO_NEWLINE
+}

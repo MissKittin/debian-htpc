@@ -1,0 +1,117 @@
+#!/bin/bash
+
+# Variables
+sudo="sudo /home/kodi/.local/sbin/nosudo"
+gtkdialog="gtkdialog -c"
+
+# Main
+case ${0##*/} in
+	admin)
+		# Only link to admin-desktop. MUST BE!!!
+		exec admin-desktop
+	;;
+	admin-desktop)
+		echo "Stopping kodi..."
+		pkill -SIGHUP kodi.bin
+		echo "Waiting..."
+		sleep 1.5
+		echo "Starting"
+		xinit "$HOME/.local/xbin/admin-desktop_xinit" > /tmp/.X_`date +%d%m%y%H%M%S`.log 2>&1
+		exit 0
+	;;
+	### $HOME/.xinitrc ### START
+	admin-desktop_xinit)
+		# Start notification daemon
+		/usr/lib/notification-daemon/notification-daemon &
+		# Start VNC
+		vnc ip &
+		# Set resolution
+		$HOME/.local/xbin/welcome-message.sh
+		resolution
+		# Start icewm session
+		exec icewm-session
+	;;
+	### $HOME/.xinitrc ### END
+	welcome-message.sh)
+		KODI_VERSION=`[ -e /tmp/.kodi/kodi.log ] && cat /tmp/.kodi/kodi.log | sed '3!d' | awk '{print $6}' | sed 's/(/ /g' | xargs`
+		export MAIN='
+			<window title="welcome" resizable="false" width-request="550" height-request="400">
+			 <vbox>
+			  <frame Kodi '"$KODI_VERSION"'>
+			   <text use-markup="true" xalign="0" wrap="false">
+			    <label>"<span background='"'#3F993F'"' color='"'white'"' font-family='"'arial'"' weight='"'bold'"' size='"'25000'"'><big> Home Theater PC                                 </big></span>"</label>
+			   </text>
+			   <text wrap="false">
+			    <input>echo "\n\nThis is admin mode.\n\n\nOther languages than English (C) isn'"'"'t available by default.\nIn this mode You can change system, storage and network settings,\nand run the web browser.\nIn next window You can choose display resolution.\nAfter this, graphic environment will be loaded.\n\n\nKeys in resolution settings\nUp and down: choose other item\nTab: move down\nMore once Tab and Space/Enter: Apply and load environment\n\nTo continue press ENTER or SPACE."</input>
+			   </text>
+			  </frame>
+			  <hbox>
+			   <button>
+			    <label>---------></label>
+			   </button>
+			  </hbox>
+			 </vbox>
+			</window>
+		'
+		$gtkdialog --program=MAIN > /dev/null 2>&1
+
+		exit 0
+	;;
+	home_reset)
+		if [ "$1" = "root" ]; then
+			SKELETON="/usr/local/etc/user_skel.tar.bz2"
+			HOME="/home/kodi"
+			[ ! -e $SKELETON ] && No skeleton! && exit 1
+			echo "Entering directory /home"
+			cd /home
+			echo "Moving $HOME to $HOME.prebackup"
+			mv $HOME $HOME.prebackup
+			echo "Unpacking skeleton..."
+			tar xf $SKELETON
+			if [ ! "$?" = "0" ]; then
+				echo "Error. Backing..."
+				rm -r -f $HOME
+				mv $HOME.prebackup $HOME
+				echo "OK"
+			fi
+			echo "Reboot after 10 sec."
+			echo "Press Ctrl-C to abort"
+			sleep 10
+			reboot
+
+			exit 0
+		fi
+		CHECKWORD_EN='Yes, do as I say!'
+		CHECKWORD_PL='Tak, jestem pewien!'
+		echo "To continue type in the phrase: \"$CHECKWORD_EN\""
+		echo "Aby kontynuowac prosze napisac zdanie: \"$CHECKWORD_PL\""
+		read CHECKWORD
+		if [ "$CHECKWORD" = "$CHECKWORD_EN" ] || [ "$CHECKWORD" = "$CHECKWORD_PL" ]; then
+			echo "Jump into large rabbit hole..."
+			sudo $0 root
+		else
+			echo "Aborted."
+			exit 1
+		fi
+	;;
+	display-ip)
+		ip=`$sudo ifconfig | grep 'inet addr' | awk '{print $2}' | sed -e 's/addr:/ /g' | sed -e 's/127.0.0.1/ /g' | xargs`
+		exip=`wget -qO- ipinfo.io/ip`
+		[ "$ip" = "" ] && all='Not connected' || all="Local IP:  $ip\nExternal: $exip"
+		notify-send "Network" "$all"
+		echo -e $all
+		exit 0
+	;;
+	rox-sudo)
+		exec $sudo $@
+	;;
+	sync)
+		sync
+		[ -e /tmp/.X*-lock ] && notify-send "Disks" "Synchronization completed"
+
+		exit 0
+	;;
+esac
+
+echo "Toolbox!"
+exit 1

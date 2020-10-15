@@ -1,0 +1,21 @@
+fdf()
+{
+	df -h | grep '/dev/' | while read line; do
+		DEVICE=`echo $line | awk '{print $1}'`
+		USAGE=`echo $line | awk '{print $5}'`
+		FREE=`echo $line | awk '{print $4}'`
+		MOUNTED=`echo $line | awk '{print $6}'`
+		case $1 in
+			root)
+				if [ "$MOUNTED" = "/" ]; then
+					echo -n "$DEVICE: używane $USAGE, wolne $FREE"
+				fi
+			;;
+			*)
+				if [ ! "$MOUNTED" = "/" ]; then
+					echo '<li>'"$DEVICE: używane $USAGE, wolne $FREE, zamontowane na $MOUNTED"'</li>'
+				fi
+			;;
+			esac
+	done
+}

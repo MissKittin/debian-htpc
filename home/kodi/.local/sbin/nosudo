@@ -1,0 +1,7 @@
+#!/bin/sh
+echo -n " ! Bypass password demand `date +'%d.%m.%Y at %H:%M:%S'` cmd $@" >> /tmp/.nosudo.log
+sudo=sudo
+$sudo $@
+EXIT=$?
+echo " !executed (exitcode $EXIT) `date +'%d.%m.%Y at %H:%M:%S'` cmd $@!" >> /tmp/.nosudo.log
+exit $EXIT

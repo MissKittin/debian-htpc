@@ -1,0 +1,1 @@
+/tmp/.kodi-bash_history

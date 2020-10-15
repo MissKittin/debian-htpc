@@ -1,0 +1,44 @@
+#!/bin/sh
+#
+# athcool            Cpu software cooling
+#
+# description: Cpu software cooling
+
+### BEGIN INIT INFO
+# Provides:          athcool
+# Required-Start:
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: init cpu software cooling
+### END INIT INFO
+
+# Lock service !!! UNLOCK: SYSTEM MAY BE UNSTABLE !!!
+exit 0
+
+. /lib/lsb/init-functions
+
+case $1 in
+	start)
+		log_begin_msg "Enabling AMD power saving"
+		athcool on | grep "enabling 'Disconnect when STPGNT Detected' bit ...  done" > /dev/null 2>&1 && EXIT=0 || EXIT=1
+		[ "$EXIT" = "0" ] && echo "Enabled AMD idle disconnect" > /dev/kmsg 2>&1
+		log_end_msg $EXIT
+		exit $EXIT
+	;;
+	stop)
+		athcool off | grep disabling
+	;;
+	status)
+		athcool stat | tail -1
+	;;
+	startup)
+		echo "AMD Idle athcool:" > /dev/kmsg 2>&1
+		athcool on | tail -2 > /dev/kmsg 2>&1
+	;;
+	*)
+		echo "Usage: amd-idle start|stop|status|startup"
+		exit 1
+	;;
+esac
+exit 0

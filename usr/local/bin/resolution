@@ -1,0 +1,86 @@
+#!/bin/bash
+
+######################
+#         Resolution #
+#     -------------- #
+#     | 1024x768 # | # <-- List and parse resolutions from xrandr
+#     -------------- #
+#  Connected outputs #
+# ------------------ #
+# |         HDMI-0 | # <-- List and parse active displays from xrandr
+# |          VGA-0 | #
+# ------------------ #
+#             ------ #
+#             | ok | # <-- Apply via xrandr
+#             ------ #
+######################
+
+# Variables
+sudo=sudo
+gtkdialog=gtkdialog
+
+# Available resolutions list
+echo '
+	<hbox>
+		<combobox>
+			<variable>RESOLUTION</variable>
+' > /tmp/.resolutions
+xrandr | awk '{print $1}' | grep x | while read line; do
+	echo '<item>'"$line"'</item>' >> /tmp/.resolutions
+	echo -n "res:$line "
+done;
+echo '
+		</combobox>
+	</hbox>
+' >> /tmp/.resolutions
+RESOLUTIONS=`cat /tmp/.resolutions`
+
+# Active outputs list
+echo '
+	<list>
+		<variable>OUTPUT</variable>
+' > /tmp/.outputs
+xrandr | grep connected | grep -v disconnected | awk '{print $1}' | while read line; do
+	echo '<item>'"$line"'</item>' >> /tmp/.outputs
+	echo -n "dev:$line"
+done; echo
+echo '</list>' >> /tmp/.outputs
+OUTPUTS=`cat /tmp/.outputs`
+
+# Clean
+rm /tmp/.resolutions /tmp/.outputs
+
+# Layout
+export MAIN='
+	<vbox>
+		<hbox>
+			<text>
+				<label>Resolution</label>
+			</text>
+		</hbox>
+		'"$RESOLUTIONS"'
+		<hbox>
+			<text>
+				<label>Connected outputs</label>
+			</text>
+		</hbox>
+		'"$OUTPUTS"'
+		<hbox>
+			<button ok></button>
+		</hbox>
+	</vbox>
+'
+
+# Wrap outputs from gtk dialog
+for i in `$gtkdialog -c --program=MAIN`; do
+	if [ "$i" == "*x*=" ]; then
+		echo empty
+	fi
+	eval $i
+done
+
+# Apply
+echo "Setting res $RESOLUTION on $OUTPUT"
+xrandr --output $OUTPUT --mode $RESOLUTION
+
+exit 0

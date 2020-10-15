@@ -1,0 +1,94 @@
+# Place your variants in /etc/icewm or in $HOME/.icewm
+# since modifications to this file will be discarded when you
+# (re)install icewm.
+#
+
+prog "Terminal" xterm xterm
+prog "Window killer" /usr/share/icons/gnome/16x16/actions/window-close.png xkill
+separator
+menu "Bluetooth ->" /usr/share/icons/hicolor/22x22/apps/blueman.png
+{
+	prog "Applet" /usr/share/icons/hicolor/22x22/apps/blueman.png blueman-applet
+	prog "Assistant" /usr/share/icons/hicolor/22x22/apps/blueman.png blueman-assistant
+	prog "Available adapters" /usr/share/icons/hicolor/22x22/apps/blueman.png blueman-adapters
+	prog "Browse device" /usr/share/icons/hicolor/22x22/apps/blueman.png blueman-browse
+	prog "Manager" /usr/share/icons/hicolor/22x22/apps/blueman.png blueman-manager
+	prog "Send to" /usr/share/icons/hicolor/22x22/apps/blueman.png blueman-sendto
+	prog "Services" /usr/share/icons/hicolor/22x22/apps/blueman.png blueman-services
+}
+prog "Connection manager" wicd-gtk.xpm wicd-client
+prog "Firewall" /usr/share/icons/hicolor/48x48/apps/gufw.png sudo /home/kodi/.local/sbin/nosudo gufw
+separator
+prog "Audio mixer" /usr/share/icons/gnome/16x16/apps/xfce4-mixer.png xterm -e alsamixer
+prog "Media center" /usr/share/icons/hicolor/22x22/apps/kodi.png kodi
+prog "ID3 tagger" easytag.xpm easytag
+separator
+prog "DOS emulator" dosemu.xpm xdosemu
+separator
+prog "File manager" /usr/share/rox/.DirIcon rox
+prog "File manager with root" /usr/share/rox/.DirIcon rox-sudo rox
+prog "Text editor" mousepad.xpm mousepad
+separator
+prog "BitTorrent client" transmission.xpm transmission-remote-gtk
+prog "Dillo Web browser" dillo.png dillo
+prog "Namoroka Web browser" /home/kodi/.local/share/icons/namoroka.png namoroka
+# Uncomment this menu if wine is installed
+#menu "Windows API ->" folder
+#{
+#	prog "Command prompt" - xterm -e wine32 cmd
+#	prog "Configuration" - wine32 winecfg
+#	prog "File manager" - wine32 winefile
+#	prog "Minesweeper" - wine32 winemine
+#}
+separator
+menu "System configuration ->" folder
+{
+	menu "Base settings ->" folder
+	{
+	prog "fstab" - sudo /home/kodi/.local/sbin/nosudo mousepad /etc/fstab
+	prog "grub" - sudo /home/kodi/.local/sbin/nosudo mousepad /etc/default/grub
+	prog "grub.d" - sudo /home/kodi/.local/sbin/nosudo rox /etc/grub.d
+	prog "pm scripts" - sudo /home/kodi/.local/sbin/nosudo rox /etc/pm
+	prog "rc.local" - sudo /home/kodi/.local/sbin/nosudo mousepad /etc/rc.local
+	prog "rcdown.local" - sudo /home/kodi/.local/sbin/nosudo mousepad /etc/rcdown.local
+	prog "smb.conf" - sudo /home/kodi/.local/sbin/nosudo mousepad /etc/samba/smb.conf
+	prog "sources.list" - sudo /home/kodi/.local/sbin/nosudo mousepad /etc/apt/sources.list
+	prog "uDev rules.d" - sudo /home/kodi/.local/sbin/nosudo rox /etc/udev/rules.d
+	prog "wicd scripts" - sudo /home/kodi/.local/sbin/nosudo rox /etc/wicd/scripts
+	}
+	menu "Extra settings ->" folder
+	{
+	prog "grub.d" - sudo /home/kodi/.local/sbin/nosudo mousepad /usr/local/etc/default/grub
+	prog "hdd stop timeout" - sudo /home/kodi/.local/sbin/nosudo mousepad /usr/local/etc/hdparm/standby
+	prog "rc.local" - sudo /home/kodi/.local/sbin/nosudo mousepad /usr/local/etc/rc.local
+	prog "rcdown.local" - sudo /home/kodi/.local/sbin/nosudo mousepad /usr/local/etc/rcdown.local
+	prog "uDev rules.d" - sudo /home/kodi/.local/sbin/nosudo rox /usr/local/etc/udev
+	}
+}
+prog "Startup manager" bum.xpm sudo /home/kodi/.local/sbin/nosudo bum
+prog "Package manager" synaptic.png sudo /home/kodi/.local/sbin/nosudo synaptic
+prog "Partition manager" gparted.xpm sudo /home/kodi/.local/sbin/nosudo gparted
+prog "Process manager" /usr/share/icons/gnome/16x16/apps/gnome-monitor.png xterm -e htop
+menu "UI configuration ->" folder
+{
+	prog "Change keymap" - select-keymap
+	prog "Change resolution" - resolution
+	prog "GTK2 theme switch" - gtk-theme-switch2
+	menu "Window Manager settings ->" /usr/share/icewm/icons/icewm_32x32.xpm
+	{
+		prog "Keys" /usr/share/icewm/icons/icewm_32x32.xpm mousepad /home/kodi/.icewm/keys
+		prog "Menu" /usr/share/icewm/icons/icewm_32x32.xpm mousepad /home/kodi/.icewm/menu
+		prog "Pre-startup script" /usr/share/icewm/icons/icewm_32x32.xpm mousepad /home/kodi/.icewm/startup
+		prog "Settings" /usr/share/icewm/icons/icewm_32x32.xpm mousepad /home/kodi/.icewm/preferences
+		prog "Toolbar" /usr/share/icewm/icons/icewm_32x32.xpm mousepad /home/kodi/.icewm/toolbar
+		prog "Windows options" /usr/share/icewm/icons/icewm_32x32.xpm mousepad /home/kodi/.icewm/winoptions
+	}
+}
+separator
+menu "Power management" /usr/share/icons/gnome/16x16/devices/uninterruptible-power-supply.png
+{
+	prog "Halt" - halt
+	prog "Reboot" - reboot
+	prog "Suspend" - s2r
+	#prog "Hot reboot" - kexec-reboot
+}

@@ -1,0 +1,113 @@
+#!/bin/bash
+
+##############################
+# Od*      perfekcyjnie      #
+##############################
+# WARNING!!!                 #
+# MANY WRITE OPERATIONS      #
+# THIS MAY KILL FLASH DEVICE #
+##############################
+
+# Debugging
+debug=0
+debug()
+{
+	[ "$debug" = "1" ] && echo $@ || true
+}
+
+# Icons
+debug "Icons"
+icon='iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AMZDwsqgzKExwAAA7FJREFUWMPtll1Mm1UYx3/vS78LpTAoMBYsskVwzRacyxAEQTMpxGSRbWbGhWwmLKDRRLK4lRiT6c2MF9OL6UxwF2bGsWF0wSkTEUNgJBOwQLu4LOts+RpY+oH0i9K+XizikHCj4FV/Vyc5OXn+Of/n+Z8DCRIkSLAWgngG2LHRZcQ1d6R4CFHeulpX0hsIYuf/cQdGRPk0ULdCgEJjAxo2snAFCu2wmGGUZFkPB9GkTYiqlHPAUcAsJCkkIH/dnF5hh0w5ijZ9O8l6kKlAENEpFagUCjxzv7MUCICERGheIBoeQx6/LUQjL0gQWw8BaiE1OyipkiFJBkothGNYuy+xs2gbAOFIhDmvH5v9Jr5AiBePNCJ5XSog8m8FyFY23ur1b3cdzDhuUVpZxfWfeig07cB7bwKNWo1KrSHkXXEKURTfFwRRF4stvQvi65Ck+bvhoxeB3rUF/BOFkrMXLqE/2MRpsxmD5Rzu4xaUu5/BP9qLXFgiBCeBq4AZEIsPNRxPe3QXP7x1LKO+WVdXXR9HpoyxGIamspSGhaCnGpQlghgZk+J0yNY0BCASpsq0jRHdJhbSNpOlTSWa+RBpphLcg72UW04j6DNPub75/JThib2Iqel47UOEtzxC6Wd9dcOdl4l+2E/50VHOn8jjnS+dsq/eK+7eb7lJc3Vym8RCx4M5EJYkaVWLlJRX4OjvRvf8MRxfnCWpYh9ujxfBVIY7GGFm3IVufxO+UAT3uBMpdysLv/Qhv/IRctPj+Lyz+OdiyJe2otJGKXrKSU+bkjgL5x8MoifLykrtSo1ulQvZm3NJ8U0SLdjJ4vWrBOIi8/ZB4o4xonGJ0Ggff1j7iUcXiYz2Exm/jbQph7n8x4jbB8gzFkBMxsDPna1dF1Tsec5D7xUpCHy/fOk1NTWDFsvJXYdfPYFr1n1/ChT3p2Ck5zJDA318fa2LA7XP0tZxjaERG7r0HIqMGcyHoyzOOBm7O+lQ6PQ5zHtAFJEUqiSv885FUU6qIVtfOzXuq1ep5YfSM7W1Uy7fa8AnywIKCwu/a2xsNGcYsjj8ypug0S4L+LH9Y4w5Bqy/3uGDT9twTkzy0r69VO3ejlypxm6z0dLScsbv9zf/1xw4WFVZ+fasP2iy3/NLKJMFRDlP7ynGartFQa6BIwfMFBpzmZqexmodob29vcvpdLYCl9YjiP4ij+QMJ5n5EAmAZ/JG/pZsV2ZqsuzG0NC3QBiIAh1AYKPeg5dl+qxhoDTxL0mQIMFG8yfJQmHc1HlPowAAAABJRU5ErkJggg=='
+dialog_error='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'
+dialog_warning='iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAABSZJREFUWIXll1toVEcYgL+Zc87u2Yu7MYmrWRuTJuvdiMuqiJd4yYKXgMQKVkSjFR80kFIVJfWCWlvpg4h98sXGWGof8iKNICYSo6JgkCBEJRG8ImYThNrNxmaTeM7pQ5IlJkabi0/9YZhhZv7///4z/8zPgf+7KCNRLgdlJijXwRyuDTlcxV9hbzv8nQmxMjg+XDtiOEplkG9PSfkztGmTgmFQd+FCVzwa3fYN/PHZAcpBaReicW5xcbb64IEQqko8Lc26d/58cxS+/BY6hmJvyEfQBoUpwWCmW1FErKaGWHU13uRk4QkEUtxQNFR7QwIoB4eiKD9PWbVKbb10CZmaCqmpxCormRYO26QQx85B0mcD+AeK0xYvHqu1tNDx+DH6gQM4jh0j3tCA3tGBLyfHLuD7zwJwAcYqun44sHy51nr5MsqsWWj5+djCYdS5c4ldvUr24sU2qarflUL6qAN0wqH0vDy7+fAhXZEI+v79CNmt7igpofPVK5SmJvyhkJBwYlQBSiHd7vUWZ86bp8WqqtCWLkVbuBAhBEIItGAQ2+rVxG7cICMY1KTDsekc5IwagIQTmStXis47dzBiMfR9+xCi+wb39s79+zFiMczGRjLmzTMlnBoVgLMwyzF+/Cb/lClq2/Xr2AoKUKdPxzAMWltbiUajmKaJkpGBY8sW3tbW4g8EVNXrXVEKK0YMoMKp7Px8K15Tg2VZOHbvBiASiRAMBgkGg0QiEYQQOIuLsRSFrnv3yJo/HxVOW5947D4KUAa57qysvNSUFOVtbS32rVuRfj9CCFwuV2Kfy+VCCIFMScFVVET7/fukJidLm883rQy+HhaABUII8cvUNWt4W1WFcLvRd+5MnHl/AOjOB+eOHchx44jX1ZEdCqkSTpaDbcgA5+GrpNmzc9ymKdvr67Hv2oVMSko4cjgcKIqCoijoup64EdLpxLV3Lx1PnuCVUrgmTfK9hV1DAjgKqlSUk1PCYdl25QrS70cvLEw4SWS+04nT6XxvXgiBc8MGtKlTaa+rIysnR1Ok/OF38PxngAzY4VuwYKL99WvR8fQpjj17kLqeiL6393g8eDyeAWBSVfEcOkRXczOOaBRvVpZuDPJEDwD4DVyKrv+UlZurxSorUWfMQC8oGOBcCDHgC/Rdc4TD2BctIl5fT+bkyTahaXvOw8RPApiwd2Ju7hjZ2EhXSwvOkhKQcoADgIqKCioqKgYcQW9LOnIEIxZDbWpiXCCABT9+FKAUxtm83pKMUEiLVVejLVqEtmTJB50LIdi2bRuFPbnRd7232efMwbVuHR2PHjHR77dJXS8sg5mDAihweFJenmrevYvR1oazpGTQ6IQQaJqG7ClI/dd655IOHsSyLMSLF6QFAib9nugEQClk2Xy+orTsbK3t1i3sa9ei5eQMGr0QgvLyci5evDiocyEEtsxMPNu30/nsGRO8XlVzu8NlkNvrV+0T/fHMZcusrtu3MeNx9PXrobUVq8cYQrw3TrRub1h9+v573Bs3Ej1zBvP5c/zp6dbLhoaTwPy+ANKCfF92thq7dg2A6JYt/fNlxGK8eUNSerryHEJHQT8K8V4A5ztojty8OeaLzZul1DSwLCzDANPEMozusWFgmWZ33288YK3/nGlixuM0v3xpWfDX0Z4i1VupXEWwIgRnJfhGPfQ+YsLr+7DzNFwCuvqWyiRg7DSYoIBu9smPkYqEd4AwIN4ITUAL0A4Da7UC6ICdEfy2fUBMoAvo7GnWKNoemfwLcAuinuFNL7QAAAAASUVORK5CYII='
+weather_clear='iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAABplJREFUWIXFl3uMVkcVwH9n5t7v+3aXBcpzgaUFojxLWSAiyLLsgmKqpUiL1KKSErTG1ERjYivWmhoMtcbUxhiNtdUgljSE5eGCSZvyWimmLS2lsmF5P1sWLOWxu9/j3jtz/ONbqoVlQah6kvPHnZkz85szZ86cCzchbl3NIzdjD2Bu1DBfXz1Mlan5+uph/xcAk5IZZmA1xsqM/zmAKoItmymTfoIJS+tUkY8MIKqfOjm3qmZoV0ZR/bSxpv/EUJP90K8qHa391JiuxufW1g6J10yf0llfcHlDSHjShP7XbkPdQaP6jMze2nyFUcBd0vp+iu1PgvOpwNrZwJ7LxxVW144MAr9Y1Y+IQ/+tzgA6dZ1rqFsmIxbe7rOnEz3+4lFVtyI1p3HXpX5dVVtBSetFmf1GVhsmlmLKu8vnt7Zc6o/qp02Q0HxFBs8aYsoGBW7vH/aGc7Z1emM6Bcivrvl4MHTGk3bCjwI9sRbf9AKu/d0lqfKyoz4bfV1DuR+VEahPI3oRIwdI3HKLfwHhVufsE+bWiTDqi/i9LyfJsZe+n7ln+/7rBgBw66f/TKoeGqnv7MjFp3YuCQKtUluy3AyblJaKMaFk+oCE4NvR3Gn01NuRHt2dxcs3k0Jhp0mnlgYDRpdpS9M+e3fj9662zlUBtKFunAtuWZpkz3wnTAULtPuAH9rx96UximabIT4FSSuIh1R/pHQ0eMG/uSbPhfPLYuKVAcEvbGAfk9lbdv/HAACF1VPHWDGjpE/lCvOJBzKa3QOF44ikUBy4PPgckANiSH8MKRmNvlGf863nv+Ridyg975WmrtboMg+kysuOSso+Y6rmZbT9bcgfAluKpnpC0AOxpWBCwIIC0T60bRcydnoJIr9Pnc13eu7XDeByufvltqoyjIdsE4gpalAGYTlqUxRvckc7QPYw+HZkwMDurqJ8wbUAPpQH9PHHTTx2U5UN5G6T6G8TYx5k4O0pbX8TcOBjxMdo3AZGQH2HpRRVARRtPYLpOyh0LacWa/20l7xlkUEamNO4R6Q46kMAurF6uFc7M5bXa4NBMy0X/pHi4vEL+IvDJXMLev5d0AQ0Rn0WiRVEUB8BMeAB7YgogcI56DkMvI7H2VY1frLr3rvKb5zlojW5zV51U+be7YcBjFs7/WEXmZ9Lr0l3hp9rKGHMghS+gMxuyApaAgqaBUlAC+CzqGtFk1bwWfBREQ4PqkX1CdgQlIzM39oGYMYNyQR1vywLKibPDox52q2d/rCuqu0mALquZnAMdSZIf8b0GVtC29mUvH9sgUvrCVv7QE+98CIQgVrQEMR2hI8vLi4dmjgoeEgCpN943N82tdvIVLjQr9SyngUpZCN8tCn2ZnPJ3K1HPzgC+ULjCeCPqqxgQzzCx+5OwXbDyk5tO/lp6AHaAtKxQwyoFL/xIK4YD4kWNeiOXryAWnOQMrpJzCuu7b2Nqbk7mi6PgS7zQLKu9j4ZNHC5GTI6redehdCAlX8FHVpUrxB7iBUKHul7B/7oYdWzp74RzPnr77pao8traHtQT8s75zWJIDUQCq6osQPnii6PPUS+A8BDpgKNPXr2TNZmSlZ2Nf81AaJz0Uif6EK/59W8lFdCalDxjAse8h3nXXCQ91DQYkruXonu3e1xuohC+5AbBojW14y3EiwLjDksufwP3Os7Ikn1QnpVQdAbYgMFjyYhBL2R3ndApi/+7685ovyPbdrtds4+oQ1147oCuKIguSRizJdN5UTikzuX+nz0WOD8Eb9rx3Pap38P03uAlV6VYEPEObTtAv7YIfVnz+TFu/lJ4poDm1pKucXn/FeBqz5GnQLoxurhrmLGMEZ9ltBnS93Jpqecc0tSQXawa+Fef/b0IjxjUC0HIjWyzyTmuSCOVlCSvg0xT5lSq4ybAvvbhmoDIzurrK4K4BP7NVteaZOmvzhzqumgV/+nf3vVVmj9tJdxtlXmb2vTVbXdKKObzN1yqSJqLqypeUTbk4XS3DrC9JkQJmfeehD4bqeevrwh11B9a5iYX6mRvS7WZzPzGg9cPiZeU/OoCJ/8YBJlh72n8adXeHJD9TDv7WJ1OjaO+XbJ/MYj1/RAxgf9EP+QzNl2ojNiAE+y3pRXVNmqoWn/1oF8cvG9DZ3u7q7th4FHtWHKIC+2ErgC4IZEFUk2znretzf/Odk46/mP9L/gekQE9XFuC7ufxce5LZen1/86AIB3utmffg3vdPONznHT4tZMv2q1e71ywx4AMIn85mYB/gmUfSU64pXP4AAAAABJRU5ErkJggg=='
+
+# Variables
+debug "Variables"
+xversion="weebtv-check"
+sleep=15
+msg_title="WeebTV Checker"
+msg_premium="D*a"
+msg_limit="Limit"
+msg_i_dont_know="Bajlandoo"
+
+# Functions
+debug "Functions"
+on_exit()
+{
+	debug "on_exit()"
+	[ "$main_started" = "1" ] && \
+		kodi-notify-send "$msg_title" "Zakończono nasłuchiwanie" /tmp/.weebtv-icon.png || \
+		kodi-notify-send "$msg_title" "Kończenie nasłuchiwania" /tmp/.weebtv-icon.png
+	exit 0
+}
+on_terminate()
+{
+	debug "on_terminate()"
+	kodi-notify-send "$msg_title" "Zabity" /tmp/.weebtv-icon.png
+	exit 1
+}
+
+# killall: exit, no terminate
+debug "Traps"
+trap 'on_exit' SIGTERM
+trap 'on_terminate' SIGINT
+
+# Check if running
+debug "Runnin?"
+[ "`ps -A | grep $xversion | wc -l`" -ge 3 ] && killall $xversion || main_started=1
+
+# My home is tmp
+debug "temp"
+cd /tmp
+
+# if base64 not installed
+debug "Check base64"
+command -pv base64 > /dev/null 2>&1 || touch .weebtv-icon.png .weebtv-dialog_error.png .weebtv-dialog_warning.png .weebtv-weather_clear.png
+# Unpack icons
+debug "Icons"
+[ ! -e .weebtv-icon.png ] && echo $icon | base64 -d > .weebtv-icon.png
+[ ! -e .weebtv-dialog_error.png ] && echo $dialog_error | base64 -d > .weebtv-dialog_error.png
+[ ! -e .weebtv-dialog_warning.png ] && echo $dialog_warning | base64 -d > .weebtv-dialog_warning.png
+[ ! -e .weebtv-weather_clear.png ] && echo $weather_clear | base64 -d > .weebtv-weather_clear.png
+
+# Loop
+debug "Loop"
+while true; do
+	# Remove index.html
+	[ -e index.html ] && \
+		rm index.html && \
+		debug "index removed"
+	# Check internet connection
+	debug "Conn check"
+	wget -q --tries=10 --timeout=20 --spider http://weeb.tv || \
+		echo "NO_CONN" > index.html
+	# Download weebtv page
+	debug "wget"
+	wget http://weeb.tv/ -q > /dev/null 2>&1
+	# Save date
+	debug "date"
+	date=`date +%H:%M:%S`
+	# Parse page
+	debug "Parse"
+	chk_premium=`cat index.html | grep 'Tylko premium'`
+	chk_limit=`cat index.html | grep 'Limit'`
+	# Check flags
+	debug "Check"
+	if [ ! "$chk_premium" = "" ]; then
+		debug "notify premium"
+		kodi-notify-send "$msg_title" "$date : $msg_premium" /tmp/.weebtv-dialog_error.png
+	elif [ ! "$chk_limit" = "" ]; then
+		debug "notify limit"
+		kodi-notify-send "$msg_title" "$date : $msg_limit" /tmp/.weebtv-dialog_warning.png
+	else
+		debug "notify $i_dont_know"
+		kodi-notify-send "$msg_title" "$date : $i_dont_know" /tmp/.weebtv-weather_clear.png
+	fi
+	# Remove index.html
+	rm index.html && \
+		debug "index removed"
+	# Wait
+	debug "Sleep $sleep"
+	sleep $sleep
+done

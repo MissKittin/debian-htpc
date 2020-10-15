@@ -1,0 +1,48 @@
+# Variables
+export LANG=C
+export PATH=$HOME/.local/bin:$PATH
+
+# History
+touch /tmp/.kodi-bash_history
+
+# temp
+[ ! -e /tmp/.kodi ] && mkdir /tmp/.kodi
+
+# SSH
+if [ ! "$SSH_CLIENT" = "" ] && [ ! "$SSH_CONNECTION" = "" ] && [ ! "$SSH_TTY" = "" ]; then return; fi
+
+# Backup
+#kodi-backup
+
+# Sound
+soundrepair
+
+# Crashlogs
+ls kodi_crashlog-* > /dev/null 2>&1 && for i in `ls kodi_crashlog-*`;do
+	mv $i $HOME/logs/kodi
+done
+
+# Console
+if [ ! -e /tmp/.X*-lock ]; then
+	while true; do
+		# Check if admin session is running
+		if [ !  "`ps -A | grep admin-desktop`" = "" ]; then
+			echo -ne "\033[1;37m[\033[1;32m admin \033[1;37m]\033[0m "
+			sleep 60
+		else
+			# If kodi is disabled
+			if [ -e $HOME/disable-kodi ]; then
+				break
+			fi
+			# Start kodi (from .xinitrc)
+			startx > /tmp/.X_`date +%d%m%y%H%M%S`.log 2>&1
+			# Red error
+			[ ! "$?" = "0" ] && echo -ne "\033[1;37m[\033[1;31m Errr \033[1;37m]\033[0m "
+			sleep 1
+			# Crashlogs
+			ls kodi_crashlog-* > /dev/null 2>&1 && for i in `ls kodi_crashlog-*`;do
+				mv $i $HOME/logs/kodi
+			done
+		fi
+	done
+fi

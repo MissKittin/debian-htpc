@@ -1,0 +1,24 @@
+. ./lib/sh/library.rc
+
+BACKUP="/home/kodi/logs/kodi/kodi_backup.tar.bz2"
+
+upgrade()
+{
+	su kodi -c "/home/kodi/.local/bin/kodi-backup force"
+	case $? in
+		0)
+			echo -n "Wykonano, trwa kompresowanie"
+		;;
+		1)
+			echo -n "Usługa wyłączona"
+		;;
+	esac
+}
+info()
+{
+	if [ -e $BACKUP ]; then
+		stat -c %y $BACKUP | cut -d . -f 1 | sed 's\-\.\g' | $NO_NEWLINE
+	else
+		echo -n "Nie mam danych"
+	fi
+}

@@ -1,0 +1,9 @@
+#!/bin/sh
+# Set keyboard map
+setxkbmap `cat $HOME/.local/etc/xkbmap`
+# Start desktop manager
+rox -p HIDDENHOSTNAME
+# Wait...
+sleep 0.5
+# Notify if connected to internet
+wget -q --tries=10 --timeout=20 --spider http://google.com && notify-send "Network manager" "Connected to internet"

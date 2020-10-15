@@ -1,0 +1,3 @@
+#!/bin/sh
+cd /media/libraries/sdb1/Linux
+exec ./start.sh

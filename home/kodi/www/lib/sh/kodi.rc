@@ -1,0 +1,14 @@
+. ./lib/sh/library.rc
+
+version()
+{
+	[ -e /tmp/.kodi/kodi.log ] && cat /tmp/.kodi/kodi.log | sed '3!d' | awk '{print $6}' | sed 's/(/ /g' | xargs | $NO_NEWLINE || echo -n "??.?"
+}
+ftime()
+{
+	[ -e /tmp/.kodi/kodi.log ] && cat /tmp/.kodi/kodi.log | sed '3!d' | awk '{print $1}' | $NO_NEWLINE || echo -n "false"
+}
+frun()
+{
+	ps -A | grep kodi.bin > /dev/null 2>&1 && echo -n "true" || echo -n "false"
+}

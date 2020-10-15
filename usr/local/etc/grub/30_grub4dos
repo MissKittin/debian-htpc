@@ -1,0 +1,16 @@
+#! /bin/sh
+set -e
+
+datarootdir="/usr/share"
+. "${datarootdir}/grub/grub-mkconfig_lib"
+
+if [ -e /boot/grub4dos/grub.exe ]; then
+gettext_printf "Grub4dos found, adding..." >&2
+cat << EOF
+menuentry 'Grub4dos' {
+    linux16 /boot/grub4dos/grub.exe --config-file=/boot/grub4dos/menu.lst
+}
+EOF
+else
+gettext_printf "Grub4dos not found, skipping\n" >&2
+fi

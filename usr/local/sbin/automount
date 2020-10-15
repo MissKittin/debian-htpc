@@ -1,0 +1,97 @@
+#!/bin/bash
+# $1=sdc1 -> udev "%k" variable
+# usage: automount $device add|remove
+
+# Abort if no params
+[ "$1" = "" ] && exit 1
+
+# Settings - script
+#LOG -> see fLOG in Functions - header
+DISABLE_SWITCH="/tmp/disable-automount"
+
+# Settings - mount
+FSTAB="/etc/fstab"
+LIBRARIES_DIR="/media/libraries"
+MOUNTPOINT="/media/removable/$1"
+PARAMS="auto\tnoauto,user,nodev,nosuid,noexec,noatime,nodiratime,sync\t0\t0"
+MOUNTUSER="kodi"
+
+# Autosettings
+DEVICE="/dev/$1"
+fFSTAB=`cat $FSTAB`
+ALL="$DEVICE\t$MOUNTPOINT\t$PARAMS"
+ROOT=`mount | grep ' on / ' | awk '{print $1}'`
+
+# Functions - header
+fLOG='/tmp/.udev_automount_err.log'
+if ! mountpoint -q /tmp; then
+	fLOG='/dev/kmsg'
+	fLOGmsg="udev automount: /tmp not mounted; "
+fi
+
+# Functions
+log()
+{
+	echo "$fLOGmsg`date +%d.%m.%Y@%H:%M:%S` $$ $@" >> $fLOG || true
+}
+elog()
+{
+	log $@
+	exit 0
+}
+
+# Exit if disabled
+[ -e $DISABLE_SWITCH ] && elog "$DISABLE_SWITCH exists, disabled."
+
+# GParted and cfdisk have higher priority
+ps -A | grep gparted && elog "GParted running, exiting..."
+ps -A | grep cfdisk && elog "CFdisk running, exiting..."
+
+# Main
+case $2 in
+	add)
+		##########===CHECK===##########
+		# Check if device is /
+		[ "$ROOT" = "$DEVICE" ] && elog "mount: Root $DEVICE device, aborted."
+
+		# Check if device is library
+		cat $FSTAB | grep $LIBRARIES_DIR | grep $DEVICE > /dev/null 2>&1 && elog "mount: Library $DEVICE device, aborted."
+		###############################
+
+		##########===MAIN===##########
+		# Add device to fstab
+		cat $FSTAB | grep $DEVICE > /dev/null 2>&1 && \
+			log "mount: Device $DEVICE exist in fstab" || \
+			echo -e $ALL >> $FSTAB
+
+		# Make mountpoint
+		[ ! -e $MOUNTPOINT ] && \
+			mkdir $MOUNTPOINT || \
+			log "mount: Directory $MOUNTPOINT exist"
+
+		# Mount
+		su $MOUNTUSER -c "mount $MOUNTPOINT" || \
+			log "mount: Mounting $MOUNTPOINT failed"
+		##############################
+	;;
+	remove)
+		# Check if unmounted
+		mountpoint -q $MOUNTPOINT || \
+			log "umount: $MOUNTPOINT already unmounted. Good. Next message will be error"
+
+		# Lazy unmount
+		su $MOUNTUSER -c "umount -l $MOUNTPOINT" || \
+			log "umount: Lazy unmounting $MOUNTPOINT failed"
+
+		# Remove mountpoint
+		[ -e $MOUNTPOINT ] && \
+			rmdir $MOUNTPOINT || \
+			log "umount: $MOUNTPOINT not exist"
+
+		# Remove device from fstab
+		echo -n "$fFSTAB" | grep -v "$DEVICE" > $FSTAB
+	;;
+esac
+
+# Successful end
+exit 0

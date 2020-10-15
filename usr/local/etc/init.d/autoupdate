@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# autoupdate        Automatic daily system upgrade
+#
+# description: Autoupdate
+
+### BEGIN INIT INFO
+# Provides:          autoupdate
+# Required-Start:
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: start daily system upgrade
+### END INIT INFO
+
+. /lib/lsb/init-functions
+
+start() {
+    log_begin_msg "Starting autoupdate service"
+    nohup nice -n 5 /usr/local/sbin/autoupdate.svc > /dev/null 2>&1 &
+    log_end_msg 0
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  status)
+	ps -A | grep autoupdate > /dev/null 2>&1 && echo "Working..." || echo "Stopped"
+	;;
+  *)
+	echo "Usage: $0 {start|status}"
+	exit 1
+esac
+
+exit 0

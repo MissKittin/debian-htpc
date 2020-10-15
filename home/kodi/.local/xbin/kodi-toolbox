@@ -1,0 +1,274 @@
+#!/bin/bash
+
+# Main
+case ${0##*/} in
+	kodi-backup)
+		# KODI BACKUP: BEGIN
+
+		# Debugging
+		[ -e /tmp/.kodi-backup_debug.log ] && mv /tmp/.kodi-backup_debug.log /tmp/.kodi-backup_debug.log.`date +%H%M%S`
+		echo -n '' > /tmp/.kodi-backup_debug.log
+		debug()
+		{
+			# if debug log not exist, debugging is disabled
+			[ -e /tmp/.kodi-backup_debug.log ] && echo "$@" >> /tmp/.kodi-backup_debug.log || true
+		}
+		debug "BACKUP STARTED"
+
+		################################
+		# Exit codes:                  #
+		# 0 <- Finished normally       #
+		# 1 <- Service disabled        #
+		# 2 <- Service already started #
+		################################
+
+		# Lock backup service
+		#debug "LOCKED" && exit 1
+
+		# Set variables
+		debug "VARIABLES"
+		BACKUP="$HOME/logs/kodi/kodi_backup.tar.bz2"
+		AUTOUPDATE="autoupdate.svc"
+
+		# Set functions
+		debug "FUNCTIONS"
+		theme()
+		{
+			debug "FUNCTION theme()"
+			case $1 in
+				1)
+					echo -e "Creating backup [ .. ] WARNING!!! Zipping and moving archive will be in background!!!"
+				;;
+				2)
+					tput cuu1
+					echo -ne "\033[18C"; echo "ok"
+				;;
+			esac
+			debug "END FUNCTION theme()"
+		}
+		move()
+		{
+			debug "FUNCTION move()"
+			################################################
+			# Zipping: lower priority for bzip
+			kodi-notify-send "Kopia zapasowa" "Kompresowanie"
+			debug "nice -n 10 bzip" && \
+				nice -n 10 bzip2 /tmp/.kodi/kodi_userdata_backup.tar; EXIT_BZIP=$?
+			################################################
+			# Check if bzip ended successfully <-- MUST HAVE
+			if [ "$EXIT_BZIP" = "0" ]; then
+				debug "BZIP: NO ERROR (0) continuing"
+			else
+				debug "BZIP: ERROR ($EXIT_BZIP)"
+				debug "EXIT 1"
+				exit 1
+			fi
+			################################################
+			kodi-notify-send "Kopia zapasowa" "Sprzątanie"
+			# Remove archive. It is already zipped
+			[ -e /tmp/.kodi/kodi_userdata_backup.tar ] && \
+				debug "rm /tmp/.kodi/kodi_userdata_backup.tar" && \
+				rm /tmp/.kodi/kodi_userdata_backup.tar
+			# Remove old backup
+			[ -e $BACKUP.old ] && \
+				debug "rm $BACKUP.old" && \
+				rm $BACKUP.old
+			# Move backup to old
+			[ -e $BACKUP ] && \
+				debug "mv $BACKUP $BACKUP.old" && \
+				mv $BACKUP $BACKUP.old
+			# Move this backup
+			debug "mv /tmp/.kodi/kodi_userdata_backup.tar.bz2 $BACKUP" && \
+				mv /tmp/.kodi/kodi_userdata_backup.tar.bz2 $BACKUP
+			################################################
+			# Notify user
+			debug "kodi-notify ok" && \
+				kodi-notify-send "Kopia zapasowa" "Wykonano"
+			debug "END FUNCTION move()"
+			exit 0
+		}
+		make() {
+			debug "FUNCTION make()"
+			# Remove all zips to shrink backup size
+			debug "rm -r -f $HOME/.kodi/addons/packages/*.zip" && \
+				rm -r -f $HOME/.kodi/addons/packages/*.zip
+			# Archiving
+			debug "tar -cf /tmp/.kodi/kodi_userdata_backup.tar .kodi" && \
+				tar -cf /tmp/.kodi/kodi_userdata_backup.tar .kodi; EXIT_TAR=$?
+			# Check if tar ended successfully <-- MUST HAVE
+			if [ "$EXIT_TAR" = "0" ]; then
+				debug "TAR: NO ERROR (0) continuing"
+			else
+				debug "TAR: ERROR ($EXIT_TAR)"
+				debug "EXIT 1"
+				exit 1
+			fi
+			debug "END FUNCTION make()"
+		}
+		restore()
+		{
+			debug "FUNCTION restore()"
+			# Check if backup exist
+			[ ! -e $BACKUP ] && \
+				debug "NO SUCH BACKUP, EXIT 1" && \
+				echo "No backup file" && \
+				exit 1
+			# Check if .kodi.old exist
+			[ -e .kodi.old ] && \
+				debug ".kodi.old DIRECTORY EXIST" && \
+				echo "Remove .kodi.old directory first!" && \
+				exit 1
+			# Make .kodi backup
+			debug "mv .kodi .kodi.old" && \
+				mv .kodi .kodi.old
+			echo ".kodi moved to .kodi.old"
+			# Unpack backup
+			echo "Unzipping..."
+			debug "tar xf $BACKUP" && \
+				tar xf $BACKUP; EXIT_TAR=$?
+			################################################
+			# Check if tar ended successfully <-- MUST HAVE
+			if [ "$EXIT_TAR" = "0" ]; then
+				debug "TAR: NO ERROR (0)"
+				echo "Restored."
+			else
+				debug "TAR: ERROR ($EXIT_TAR)"
+				echo "Error. Restoring .kodi.old ..."
+				debug "rm -r -f .kodi" && \
+					rm -r -f .kodi
+				debug "mv .kodi.old .kodi" && \
+					mv .kodi.old .kodi
+				echo "Restoring from backup failed"
+				debug "EXIT 1"
+				exit 1
+			fi
+			################################################
+			debug "END FUNCTION restore()"
+			exit 0
+		}
+
+		### MAIN ###
+
+		# Check if running
+		if [ ! "$1" = "move" ]; then
+			if ps -A | grep ${0##*/} | grep -v $$ > /dev/null 2>&1; then
+				debug "SECOND COPY"
+				exit 2
+			fi
+		fi
+
+		# My home is $HOME
+		debug "cd $HOME"
+		cd $HOME
+
+		# Check if autoupdate is running (slooow)
+		if ps -A | grep $AUTOUPDATE > /dev/null 2>&1; then
+			debug "AUTOUPDATE RUNNIN, EXIT 2"
+			exit 2
+		fi
+
+		# Orient
+		[ "$1" = "move" ] && \
+			debug "CALL move()" && \
+			move
+		[ "$1" = "restore" ] && \
+			debug "CALL restore()" && \
+			restore
+
+		# Check weekly
+		if [ ! "$1" = "force" ]; then
+			if [ -e $BACKUP ]; then
+				debug "BACKUP EXIST"
+				if [ ! "$[ $(date +%s) - $(stat -c %Z $BACKUP) ]" -ge 604800 ]; then
+					debug "NO WEEK"
+					exit 0
+				fi
+			fi
+		else
+			debug "FORCED"
+		fi
+
+		# Kodi: START
+		debug "kodi-notify start"
+		kodi-notify-send "Kopia zapasowa" "Startuję"
+
+		theme 1
+		make
+		theme 2
+		# Starting zip service in background
+		debug "nohup $0 move" && nohup $0 move > /dev/null 2>&1 &
+
+		exit 0
+
+		# KODI BACKUP: END
+	;;
+	soundrepair)
+		[ ! -e /proc/asound/cards ] && exit 0
+		hdmi=`cat /proc/asound/cards | grep HDMI | xargs | awk '{print $1}'`
+		log()
+		{
+			# Log begin in main. Do not use previous.
+			echo "`date +%d.%m.%Y@%H:%M:%S` $@" >> /tmp/.soundcards_updated.log
+		}
+		clog()
+		{
+			echo "Original .asoundrc" >> /tmp/.soundcards_updated.log
+			cat .asoundrc >> /tmp/.soundcards_updated.log
+			echo "================" >> /tmp/.soundcards_updated.log
+			echo "Modded .asoundrc" >> /tmp/.soundcards_updated.log
+			cat /tmp/.asoundrc.mod >> /tmp/.soundcards_updated.log
+			echo "================" >> /tmp/.soundcards_updated.log
+		}
+		theme()
+		{
+			case $1 in
+				1)
+					echo "--------------------------------------"
+					echo "| Sound cards changed. F*      it... |"
+					echo "--------------------------------------"
+				;;
+				2)
+					tput cuu1; tput cuu1; tput cuu1
+					echo -ne "\033[38C"; echo "-----"
+					echo -ne "\033[38C"; echo " ok |"
+					echo -ne "\033[38C"; echo "-----"
+				;;
+			esac
+		}
+		change()
+		{
+			# Apply theme 1
+			theme 1
+			# Begin log
+			echo -n '' > /tmp/.soundcards_updated.log
+			# Main
+			if [ "$hdmi" = "0" ]; then
+				log "Modding .asoundrc"
+				cat .asoundrc | sed 's/0/1/g' > /tmp/.asoundrc.mod
+				log "Catching both .asoundrcs"
+				clog
+				log "Applying mod"
+				cat /tmp/.asoundrc.mod > .asoundrc
+				log "Cleaning"
+				rm /tmp/.asoundrc.mod
+			else
+				log "Modding .asoundrc"
+				cat .asoundrc | sed 's/1/0/g' > /tmp/.asoundrc.mod
+				log "Catching both .asoundrcs"
+				clog
+				log "Applying mod"
+				cat /tmp/.asoundrc.mod > .asoundrc
+				log "Cleaning"
+				rm /tmp/.asoundrc.mod
+			fi
+			# Apply theme 2
+			theme 2
+		}
+		# if default device is hdmi; then change it
+		cat .asoundrc | grep $hdmi > /dev/null 2>&1 && change
+		exit 0
+	;;
+esac
+
+echo "Toolbox!"
+exit 1

@@ -1,0 +1,46 @@
+#!/bin/sh
+
+FFSRC="$HOME/.local/share/namoroka"
+FFHOME="/tmp/.firefox-home"
+FFROOT="$FFHOME/firefox-3.6.6"
+
+PWD=`pwd`
+
+# Unpack
+echo -n "Unpacking"
+mkdir $FFHOME $FFROOT
+cd $FFROOT ### ENTER TO $FFROOT HERE
+tar xf $FFSRC/namoroka.tar.gz
+
+# Add flashplayer
+if [ ! -e $FFROOT/plugins/libflashplayer.so ]; then
+ echo -n " Adding flash player"
+ mkdir $FFHOME/.adobe $FFHOME/.macromedia
+ zcat $FFSRC/flash-player.gz > $FFROOT/plugins/libflashplayer.so
+fi
+
+
+# Apply patch
+if [ -e $FFSRC/namoroka_patch.tar.gz ] && [ ! -e $FFHOME/.patched ]; then
+ echo -n " Patching"
+ tar xf $FFSRC/namoroka_patch.tar.gz
+ touch $FFHOME/.patched
+fi
+
+
+# Move home directory from root. GO AWAY
+if [ ! -e $FFHOME/.mozilla ]; then
+ echo -n " Creating home directory"
+ mv $FFROOT/home-directory/.mozilla $FFHOME
+fi
+
+# Clean
+if [ -e $FFROOT/home-directory ]; then
+ echo -n " Cleaning"
+ rm -r -f $FFROOT/home-directory
+fi
+
+# Start
+echo " Starting"; notify-send -i $FFROOT/chrome/icons/default/default32.png "Namoroka" "Startuję..."
+cd $PWD ### ENTER TO $PWD HERE
+exec $FFROOT/firefox $@

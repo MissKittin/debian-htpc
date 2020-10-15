@@ -1,0 +1,100 @@
+#!/bin/bash
+
+# Debugging
+#echo -n '' > /tmp/.autoupdate_debug.log
+debug()
+{
+	# if debug log not exist, debugging is disabled
+	[ -e /tmp/.autoupdate_debug.log ] && echo "$@" >> /tmp/.autoupdate_debug.log || true
+}
+debug "AUTOUPDATE STARTED"
+
+################################
+# Exit codes:                  #
+# 0 <- Finished normally       #
+# 1 <- Service disabled        #
+# 2 <- Service already started #
+################################
+
+# Lock autoupdate
+#debug "LOCKED" && exit 1
+
+##### START #####
+
+# Set variables
+debug "VARIABLES"
+LOG="/home/kodi/logs/system/update.log"
+PING_HOST="http://google.com"
+
+# Check if autoupdate is running (only one session can be started)
+if ps -A | grep ${0##*/} | grep -v $$ > /dev/null 2>&1; then
+	debug "SECOND COPY"
+	exit 2
+fi
+
+# Check last update if > 24h
+if [ ! "$1" = "force" ]; then
+	if [ -e $LOG ]; then
+		debug "LOG EXIST"
+		if [ ! "$[ $(date +%s) - $(stat -c %Z $LOG) ]" -ge 86400 ]; then
+			debug "NO 24h"
+			exit 0
+		fi
+	fi
+else
+	debug "FORCED"
+fi
+
+# Check internet connection
+while ! wget -q --tries=10 --timeout=20 --spider $PING_HOST; do
+	debug "NO INTERNET"
+	sleep 10
+done
+
+# Remove old log, move exist log to old
+if [ -e $LOG ]; then
+	if [ -e $LOG.old ]; then
+		rm $LOG.old
+		debug "OLD LOG REMOVED"
+	fi
+	mv $LOG $LOG.old
+	debug "LOG MOVED"
+fi
+
+# Make log file
+echo '' > $LOG 2>&1
+debug "LOG MADE"
+
+# Begin log
+echo ": LOG: log started $(date)" >> $LOG 2>&1
+debug "LOG BEGINNING - SEE MAIN LOG"
+
+# Synchronize clock
+echo ": NTPSYNC:" >> $LOG 2>&1
+ntpdate-debian >> $LOG 2>&1
+
+# Update
+echo ": UPDATE:" >> $LOG 2>&1
+apt-get -o quiet=1 update >> $LOG 2>&1
+# Upgrade
+echo ": UPGRADE:" >> $LOG 2>&1
+apt-get upgrade -y -q -u >> $LOG 2>&1
+# Clean
+echo ": CLEAN:" >> $LOG 2>&1
+apt-get autoremove --purge -y >> $LOG 2>&1
+apt-get clean -y >> $LOG 2>&1
+# Deborphan
+while [ ! "`deborphan`" = "" ]; do
+	echo ": DEBORPHAN:" >> $LOG 2>&1
+	deborphan | xargs apt-get purge -y >> $LOG 2>&1
+	echo ": AUTOREMOVE:" >> $LOG 2>&1
+	apt-get autoremove --purge -y >> $LOG 2>&1
+done
+
+# Save log
+echo ": LOG: log ended $(date)" >> $LOG 2>&1
+
+# Notify user
+/usr/local/bin/kodi-notify-send "Aktualizacja systemu" "Zakończono
+
+exit 0

@@ -1,0 +1,59 @@
+#!/bin/sh
+
+############################
+# Choose keyboard language #
+# ------------------------ #
+# | locale           | V | # <-- List files from /usr/share/X11/xkb/symbols
+# ------------------------ #
+#       ------  ---------- #
+#       | ok |  | Cancel | #
+#       ------  ---------- #
+############################
+
+# Variables
+gtkdialog=gtkdialog
+fXKBMAP="$HOME/.local/etc/xkbmap"
+
+# Locales list
+PWD=`pwd`
+cd /usr/share/X11/xkb/symbols
+KBMAPS=''
+for i in `find . -maxdepth 1 -type f | tr "./" " " | sort`; do
+	KBMAPS="$KBMAPS"'<item>'"$i"'</item>'
+done
+cd $PWD
+
+# Layout
+export MAIN='
+	<vbox>
+		<hbox>
+			<text>
+				<label>Choose keyboard lanuage</label>
+			</text>
+		</hbox>
+		<hbox>
+			<combobox>
+				<variable>XKBMAP</variable>
+				'"$KBMAPS"'
+			</combobox>
+		</hbox>
+		<hbox>
+			<button ok></button>
+			<button cancel></button>
+		</hbox>
+	</vbox>
+'
+
+# Wrap outputs from gtk dialog
+for i in `$gtkdialog -c --program=MAIN`; do
+	eval $i
+done
+[ "$EXIT" = "Cancel" ] && exit 0
+
+# Apply
+echo "Setting default keymap $XKBMAP"
+echo -n $XKBMAP > $fXKBMAP
+echo "Setting session keymap $XKBMAP"
+setxkbmap $XKBMAP
+
+exit 0
